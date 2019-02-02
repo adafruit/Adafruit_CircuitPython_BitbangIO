@@ -1,5 +1,5 @@
 import time
-from adafruit_circuitpython_bitbangio import SPIDevice
+from adafruit_bitbangio import SPIDevice
 from micropython import const
 try:
     import struct

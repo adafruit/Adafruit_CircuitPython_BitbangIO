@@ -1,5 +1,5 @@
 import board
-from adafruit_circuitpython_bitbangio import SPI
+from adafruit_bitbangio import SPI
 from bme280_bbspi import BME280
 
 print("Testing BME280 BBSPI interface")

@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 """
-`adafruit_circuitpython_bitbangio`
+`adafruit_bitbangio`
 ================================================================================
 
 BitBang library for CircuitPython and Python3+Blinka
@@ -46,7 +46,7 @@ Implementation Notes
 # imports
 
 __version__ = "0.0.0-auto.0"
-__repo__ = "https://github.com/adafruit/Adafruit_circuitpython_CircuitPython_BitBangIO.git"
+__repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_BitBangIO.git"
 
 import time
 import digitalio

@@ -9,8 +9,8 @@ Introduction
     :target: https://discord.gg/nBQh6qu
     :alt: Discord
 
-.. image:: https://travis-ci.com/adafruit/Adafruit_circuitpython_CircuitPython_BitBangIO.svg?branch=master
-    :target: https://travis-ci.com/adafruit/Adafruit_circuitpython_CircuitPython_BitBangIO
+.. image:: https://travis-ci.com/adafruit/Adafruit_CircuitPython_BitBangIO.svg?branch=master
+    :target: https://travis-ci.com/adafruit/Adafruit_CircuitPython_BitBangIO
     :alt: Build Status
 
 BitBang library for CircuitPython and Python3+Blinka
@@ -63,7 +63,7 @@ Contributing
 ============
 
 Contributions are welcome! Please read our `Code of Conduct
-<https://github.com/adafruit/Adafruit_circuitpython_CircuitPython_BitBangIO/blob/master/CODE_OF_CONDUCT.md>`_
+<https://github.com/adafruit/Adafruit_CircuitPython_BitBangIO/blob/master/CODE_OF_CONDUCT.md>`_
 before contributing to help this project stay welcoming.
 
 Building locally
