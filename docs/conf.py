@@ -34,7 +34,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Adafruit_circuitpython BitBangIO Library'
+project = u'Adafruit BitBangIO Library'
 copyright = u'2019 Dave Astels'
 author = u'Dave Astels'
 
@@ -135,7 +135,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'Adafruit_circuitpythonBitBangIOLibrary.tex', u'Adafruit_circuitpythonBitBangIO Library Documentation',
+    (master_doc, 'AdafruitnBitBangIOLibrary.tex', u'Adafruit BitBangIO Library Documentation',
      author, 'manual'),
 ]
 
@@ -144,7 +144,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'Adafruit_circuitpythonBitBangIOlibrary', u'Adafruit_circuitpython BitBangIO Library Documentation',
+    (master_doc, 'AdafruitBitBangIOlibrary', u'Adafruit BitBangIO Library Documentation',
      [author], 1)
 ]
 
@@ -154,7 +154,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'Adafruit_circuitpythonBitBangIOLibrary', u'Adafruit_circuitpython BitBangIO Library Documentation',
-     author, 'Adafruit_circuitpythonBitBangIOLibrary', 'One line description of project.',
+    (master_doc, 'AdafruitBitBangIOLibrary', u'Adafruit BitBangIO Library Documentation',
+     author, 'AdafruitBitBangIOLibrary', 'BitBang I/O implementation.',
      'Miscellaneous'),
 ]

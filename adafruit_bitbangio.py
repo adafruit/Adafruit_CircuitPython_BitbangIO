@@ -33,8 +33,6 @@ Implementation Notes
 
 **Hardware:**
 
-.. todo:: Add links to any specific hardware product page(s), or category page(s). Use unordered list & hyperlink rST
-   inline format: "* `Link Text <url>`_"
 
 **Software and Dependencies:**
 
@@ -55,7 +53,7 @@ class SPI(object):
 
     def __init__(self, clock=None, MOSI=None, MISO=None):
         if clock is None or MOSI is None or MISO is None:
-            return None
+            raise ValueError('Clock, MOSI, and MISO most all be provided')
 
         self._clock_pin = digitalio.DigitalInOut(clock)
         self._clock_pin.direction = digitalio.Direction.OUTPUT
