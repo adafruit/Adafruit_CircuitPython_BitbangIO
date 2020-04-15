@@ -17,7 +17,10 @@ Introduction
     :target: https://github.com/psf/black
     :alt: Code Style: Black
 
-A library for adding bitbang I2C and SPI to CircuitPython without the built-in bitbangio module
+    A library for adding bitbang I2C and SPI to CircuitPython without the built-in bitbangio module.
+    The interface is intended to be the same as bitbangio and therefore there is no bit order or chip
+    select functionality. If your board supports bitbangio, it is recommended to use that instead
+    as the timing should be more reliable.
 
 
 Dependencies
@@ -32,12 +35,6 @@ This is easily achieved by downloading
 
 Installing from PyPI
 =====================
-.. note:: This library is not available on PyPI yet. Install documentation is included
-   as a standard element. Stay tuned for PyPI availability!
-
-.. todo:: Remove the above note if PyPI version is/will be available at time of release.
-   If the library is not planned for PyPI, remove the entire 'Installing from PyPI' section.
-
 On supported GNU/Linux systems like the Raspberry Pi, you can install the driver locally `from
 PyPI <https://pypi.org/project/adafruit-circuitpython-bitbangio/>`_. To install for current user:
 
@@ -63,7 +60,34 @@ To install in a virtual environment in your current project:
 Usage Example
 =============
 
-.. todo:: Add a quick, simple example. It and other examples should live in the examples folder and be included in docs/examples.rst.
+.. code-block:: python
+
+    """
+    This example is for demonstrating how to retrieving the
+    board ID from a BME280, which is stored in register 0xD0.
+    It should return a result of [96]
+    """
+
+    import board
+    import digitalio
+    import adafruit_bitbangio as bitbangio
+
+    # Change these to the actual connections
+    SCLK_PIN = board.D6
+    MOSI_PIN = board.D17
+    MISO_PIN = board.D18
+    CS_PIN = board.D5
+
+    cs = digitalio.DigitalInOut(CS_PIN)
+    cs.switch_to_output(value=True)
+
+    spi = bitbangio.SPI(SCLK_PIN, MOSI=MOSI_PIN, MISO=MISO_PIN)
+    cs.value = 0
+    spi.write([0xD0])
+    data = [0x00]
+    spi.readinto(data)
+    cs.value = 1
+    print("Result is {}".format(data))
 
 Contributing
 ============
