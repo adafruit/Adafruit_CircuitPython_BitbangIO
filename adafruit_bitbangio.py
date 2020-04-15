@@ -128,9 +128,9 @@ class SPI(_BitBangIO):
             if phase not in (0, 1):
                 raise ValueError("phase must be either 0 or 1")
             self._baudrate = baudrate
-            self._bits = bits
             self._polarity = polarity
             self._phase = phase
+            self._bits = bits
             self._half_period = (1 / self._baudrate) / 2  # 50% Duty Cyle delay
 
         else:
@@ -156,18 +156,19 @@ class SPI(_BitBangIO):
         for byte in buffer[start:end]:
             for bit_position in range(self._bits):
                 bit_value = byte & 0x80 >> bit_position
+                # Set clock to base
+                if not self._phase:  # Mode 0, 2
+                    self._mosi.value = bit_value
+                self._sclk.value = self._polarity
+                start_time = self._wait(start_time)
+
                 # Flip clock off base
-                self._sclk.value = 0
-                start_time = self._wait(start_time)
-                # Write bit to MOSI.
-                if not self._phase:  # Mode 1, 3
+                if self._phase:  # Mode 1, 3
                     self._mosi.value = bit_value
-                # Return clock to base
-                self._sclk.value = 1
+                self._sclk.value = not self._polarity
                 start_time = self._wait(start_time)
-                if self._phase:  # Mode 0, 2
-                    self._mosi.value = bit_value
-        # Return pins to resting positions
+
+        # Return pins to base positions
         self._mosi.value = 0
         self._sclk.value = self._polarity
 
@@ -184,11 +185,11 @@ class SPI(_BitBangIO):
             for bit_position in range(self._bits):
                 bit_mask = 0x80 >> bit_position
                 bit_value = write_value & 0x80 >> bit_position
-                # Return clock to 0
-                self._sclk.value = 0
+                # Return clock to base
+                self._sclk.value = self._polarity
                 start_time = self._wait(start_time)
                 # Handle read on leading edge of clock.
-                if not self._phase:
+                if not self._phase:  # Mode 0, 2
                     if self._mosi is not None:
                         self._mosi.value = bit_value
                     if self._miso.value:
@@ -198,10 +199,10 @@ class SPI(_BitBangIO):
                         # Set bit to 0 at appropriate location.
                         buffer[byte_position] &= ~bit_mask
                 # Flip clock off base
-                self._sclk.value = 1
+                self._sclk.value = not self._polarity
                 start_time = self._wait(start_time)
                 # Handle read on trailing edge of clock.
-                if self._phase:
+                if self._phase:  # Mode 1, 3
                     if self._mosi is not None:
                         self._mosi.value = bit_value
                     if self._miso.value:
@@ -211,7 +212,7 @@ class SPI(_BitBangIO):
                         # Set bit to 0 at appropriate location.
                         buffer[byte_position] &= ~bit_mask
 
-        # Return pins to resting positions
+        # Return pins to base positions
         self._mosi.value = 0
         self._sclk.value = self._polarity
 
@@ -249,10 +250,10 @@ class SPI(_BitBangIO):
                 bit_value = buffer_out[byte_position + out_start] & 0x80 >> bit_position
                 in_byte_position = byte_position + in_start
                 # Return clock to 0
-                self._sclk.value = 0
+                self._sclk.value = self._polarity
                 start_time = self._wait(start_time)
                 # Handle read on leading edge of clock.
-                if not self._phase:
+                if not self._phase:  # Mode 0, 2
                     self._mosi.value = bit_value
                     if self._miso.value:
                         # Set bit to 1 at appropriate location.
@@ -261,10 +262,10 @@ class SPI(_BitBangIO):
                         # Set bit to 0 at appropriate location.
                         buffer_in[in_byte_position] &= ~bit_mask
                 # Flip clock off base
-                self._sclk.value = 1
+                self._sclk.value = not self._polarity
                 start_time = self._wait(start_time)
                 # Handle read on trailing edge of clock.
-                if self._phase:
+                if self._phase:  # Mode 1, 3
                     self._mosi.value = bit_value
                     if self._miso.value:
                         # Set bit to 1 at appropriate location.
@@ -272,6 +273,10 @@ class SPI(_BitBangIO):
                     else:
                         # Set bit to 0 at appropriate location.
                         buffer_in[in_byte_position] &= ~bit_mask
+
+        # Return pins to base positions
+        self._mosi.value = 0
+        self._sclk.value = self._polarity
 
     # pylint: enable=too-many-branches
 
