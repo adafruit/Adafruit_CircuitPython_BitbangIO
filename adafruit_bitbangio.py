@@ -50,8 +50,10 @@ __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_BitbangIO.git"
 MSBFIRST = 0
 LSBFIRST = 1
 
+
 class _BitBangIO:
     """Base class for subclassing only"""
+
     def __init__(self):
         self._locked = False
 
@@ -79,7 +81,9 @@ class _BitBangIO:
     def deinit(self):
         """Free any hardware used by the object."""
         return
+
     # pylint: enable=no-self-use
+
 
 class SPI(_BitBangIO):
     """Software-based implementation of the SPI protocol over GPIO pins."""
@@ -114,20 +118,20 @@ class SPI(_BitBangIO):
         """Configures the SPI bus. Only valid when locked."""
         if self._locked:
             if not isinstance(baudrate, int):
-                raise ValueError('baudrate must be an integer')
+                raise ValueError("baudrate must be an integer")
             if not isinstance(bits, int):
-                raise ValueError('bits must be an integer')
+                raise ValueError("bits must be an integer")
             if bits < 1 or bits > 8:
-                raise ValueError('bits must be in the range of 1-8')
-            if polarity not in(0, 1):
-                raise ValueError('polarity must be either 0 or 1')
-            if phase not in(0, 1):
-                raise ValueError('phase must be either 0 or 1')
+                raise ValueError("bits must be in the range of 1-8")
+            if polarity not in (0, 1):
+                raise ValueError("polarity must be either 0 or 1")
+            if phase not in (0, 1):
+                raise ValueError("phase must be either 0 or 1")
             self._baudrate = baudrate
             self._bits = bits
             self._polarity = polarity
             self._phase = phase
-            self._half_period = (1 / self._baudrate) / 2 # 50% Duty Cyle delay
+            self._half_period = (1 / self._baudrate) / 2  # 50% Duty Cyle delay
 
         else:
             raise RuntimeError("First call try_lock()")
@@ -136,7 +140,7 @@ class SPI(_BitBangIO):
         """Wait for up to one half cycle"""
         while (start + self._half_period) > monotonic():
             pass
-        return monotonic() # Record last time
+        return monotonic()  # Return current time
 
     def write(self, buffer, start=0, end=None):
         """Write the data contained in buf. Requires the SPI being locked.
@@ -144,7 +148,7 @@ class SPI(_BitBangIO):
         """
         # Fail MOSI is not specified.
         if self._mosi is None:
-            raise RuntimeError('Write attempted with no MOSI pin specified.')
+            raise RuntimeError("Write attempted with no MOSI pin specified.")
         if end is None:
             end = len(buffer)
 
@@ -156,12 +160,12 @@ class SPI(_BitBangIO):
                 self._sclk.value = 0
                 start_time = self._wait(start_time)
                 # Write bit to MOSI.
-                if not self._phase: # Mode 1, 3
+                if not self._phase:  # Mode 1, 3
                     self._mosi.value = bit_value
                 # Return clock to base
                 self._sclk.value = 1
                 start_time = self._wait(start_time)
-                if self._phase: # Mode 0, 2
+                if self._phase:  # Mode 0, 2
                     self._mosi.value = bit_value
         # Return pins to resting positions
         self._mosi.value = 0
@@ -172,7 +176,7 @@ class SPI(_BitBangIO):
         locked. If the number of bytes to read is 0, nothing happens.
         """
         if self._miso is None:
-            raise RuntimeError('Read attempted with no MISO pin specified.')
+            raise RuntimeError("Read attempted with no MISO pin specified.")
         if end is None:
             end = len(buffer)
         start_time = monotonic()
@@ -212,23 +216,31 @@ class SPI(_BitBangIO):
         self._sclk.value = self._polarity
 
     # pylint: disable=too-many-branches
-    def write_readinto(self, buffer_out, buffer_in, *, out_start=0,
-                       out_end=None, in_start=0, in_end=None):
+    def write_readinto(
+        self,
+        buffer_out,
+        buffer_in,
+        *,
+        out_start=0,
+        out_end=None,
+        in_start=0,
+        in_end=None
+    ):
         """Write out the data in buffer_out while simultaneously reading data into buffer_in.
         The lengths of the slices defined by buffer_out[out_start:out_end] and
         buffer_in[in_start:in_end] must be equal. If buffer slice lengths are
         both 0, nothing happens.
         """
         if self._mosi is None:
-            raise RuntimeError('Write attempted with no MOSI pin specified.')
+            raise RuntimeError("Write attempted with no MOSI pin specified.")
         if self._miso is None:
-            raise RuntimeError('Read attempted with no MISO pin specified.')
+            raise RuntimeError("Read attempted with no MISO pin specified.")
         if out_end is None:
             out_end = len(buffer_out)
         if in_end is None:
             in_end = len(buffer_in)
         if len(buffer_out[out_start:out_end]) != len(buffer_in[in_start:in_end]):
-            raise RuntimeError('Buffer slices must be equal length')
+            raise RuntimeError("Buffer slices must be equal length")
 
         start_time = monotonic()
         for byte_position, _ in enumerate(buffer_out[out_start:out_end]):
@@ -260,6 +272,7 @@ class SPI(_BitBangIO):
                     else:
                         # Set bit to 0 at appropriate location.
                         buffer_in[in_byte_position] &= ~bit_mask
+
     # pylint: enable=too-many-branches
 
     @property
