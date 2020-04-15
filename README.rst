@@ -17,10 +17,10 @@ Introduction
     :target: https://github.com/psf/black
     :alt: Code Style: Black
 
-    A library for adding bitbang I2C and SPI to CircuitPython without the built-in bitbangio module.
-    The interface is intended to be the same as bitbangio and therefore there is no bit order or chip
-    select functionality. If your board supports bitbangio, it is recommended to use that instead
-    as the timing should be more reliable.
+A library for adding bitbang I2C and SPI to CircuitPython without the built-in bitbangio module.
+The interface is intended to be the same as bitbangio and therefore there is no bit order or chip
+select functionality. If your board supports bitbangio, it is recommended to use that instead
+as the timing should be more reliable.
 
 
 Dependencies
