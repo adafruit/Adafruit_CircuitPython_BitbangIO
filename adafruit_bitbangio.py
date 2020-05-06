@@ -110,7 +110,6 @@ class I2C(_BitBangIO):
         self._sda.value = 1
 
         self._delay = 1 / frequency / 2
-        self._frequency = frequency
         self._timeout = timeout
 
     def scan(self):
@@ -170,10 +169,12 @@ class I2C(_BitBangIO):
 
     def _scl_release(self):
         """Release and let the pullups lift"""
+        # Use self._timeout to add clock stretching
         self._scl.value = 1
 
     def _sda_release(self):
         """Release and let the pullups lift"""
+        # Use self._timeout to add clock stretching
         self._sda.value = 1
 
     def _set_values(self, *, scl, sda, delay=None):
