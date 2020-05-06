@@ -41,7 +41,7 @@ Implementation Notes
 """
 
 # imports
-from time import monotonic
+from time import monotonic, sleep
 from digitalio import DigitalInOut
 
 __version__ = "0.0.0-auto.0"
@@ -84,6 +84,198 @@ class _BitBangIO:
 
     # pylint: enable=no-self-use
 
+class I2C(_BitBangIO):
+    """Software-based implementation of the I2C protocol over GPIO pins."""
+    def __init__(self, scl, sda, *, frequency=400000, timeout=1):
+        """Initialize bitbang (or software) based I2C.  Must provide the I2C
+        clock, and data pin numbers.
+        """
+        super().__init__()
+
+        # Set pins as outputs/inputs.
+        self._scl = DigitalInOut(scl)
+        self._scl.switch_to_output()
+        self._scl.value = 1
+
+        # SDA flips between being input and output
+        self._sda = DigitalInOut(sda)
+        self._sda.switch_to_output()
+        self._sda.value = 1
+
+        self._delay = 1 / frequency / 2
+        self._frequency = frequency
+        self._timeout = timeout
+
+    def scan(self):
+        """Perform an I2C Device Scan"""
+        found = []
+        for address in range(0, 0x80):
+            if self._probe(address):
+                found.append(address)
+        return found
+
+    def writeto(self, address, buffer, *, start=0, end=None, stop=True):
+        """Write data from the buffer to an address"""
+        if end is None:
+            end = len(buffer)
+        self._write(address, buffer[start:end], stop)
+
+    def readfrom_into(self, address, buffer, *, start=0, end=None):
+        """Read data from an address and into the buffer"""
+        if end is None:
+            end = len(buffer)
+
+        readin = self._read(address, end - start)
+        for i in range(end - start):
+            buffer[i + start] = readin[i]
+
+    def writeto_then_readfrom(
+        self,
+        address,
+        out_buffer,
+        in_buffer,
+        *,
+        out_start=0,
+        out_end=None,
+        in_start=0,
+        in_end=None
+    ):
+        """Write data from buffer_out to an address and then
+        read data from an address and into buffer_in
+        """
+        if out_end is None:
+            out_end = len(buffer_out)
+        if in_end is None:
+            in_end = len(buffer_in)
+        self.writeto(address, buffer_out, start=out_start, end=out_end, stop=stop)
+        self.readfrom_into(address, buffer_in, start=in_start, end=in_end)
+
+    def _scl_low(self):
+        self._scl.value = 0
+
+    def _sda_low(self):
+        self._sda.value = 0
+
+    def _scl_release(self):
+        """Release and let the pullups lift"""
+        self._scl.value = 1
+        
+    def _sda_release(self):
+        """Release and let the pullups lift"""
+        self._sda.value = 1
+
+    def _set_values(self, *, scl, sda, delay=None):
+        if delay is None:
+            delay = self._delay
+        self._scl.value = scl
+        self._scl.value = sda
+        sleep(delay)
+
+    def _start(self):
+        self._sda_release()
+        self._scl_release()
+        sleep(self._delay)
+        self._sda_low()
+        sleep(self._delay)
+
+    def _stop(self):
+        self._scl_low()
+        sleep(self._delay)
+        self._sda_low()
+        sleep(self._delay)
+        self._scl_release()
+        sleep(self._delay)
+        self._sda_release()
+        sleep(self._delay)
+
+    def _repeated_start(self):
+        self._scl_low()
+        sleep(self._delay)
+        self._sda_release()
+        sleep(self._delay)
+        self._scl_release()
+        sleep(self._delay)
+        self._sda_low()
+        sleep(self._delay)
+
+    def _write_byte(self, byte):
+        for bit_position in range(8):
+            self._scl_low()
+            sleep(self._delay)
+            if byte & (0x80 >> bit_position):
+                self._sda_release()
+            else:
+                self._sda_low()
+            sleep(self._delay)
+            self._scl_release()
+            sleep(self._delay)
+        self._scl_low()
+        sleep(self._delay * 2)
+
+        self._scl_release()
+        sleep(self._delay)
+
+        self._sda.switch_to_input()
+        ack = self._sda.value
+        self._sda.switch_to_output()
+        sleep(self._delay)
+
+        self._scl_low()
+
+        return not ack
+
+    def _read_byte(self, ack=False):
+        self._scl_low()
+        sleep(self._delay)
+
+        data = 0
+        self._sda.switch_to_input()
+        for _ in range(8):
+            self._scl_release()
+            sleep(self._delay)
+            data = (data << 1) | int(self._sda.value)
+            sleep(self._delay)
+            self._scl_low()
+            sleep(self._delay)
+        self._sda.switch_to_output()
+        
+        if ack:
+            self._sda_low()
+        else:
+            self._sda_release()
+        sleep(self._delay)
+        self._scl_release()
+        sleep(self._delay)
+        return data & 0xFF
+    
+    def _probe(self, address):
+        self._start()
+        ok = self._write_byte(address << 1)
+        self._stop()
+        return ok > 0
+        
+    def _write(self, address, buffer, transmit_stop):
+        self._start()
+        if not self._write_byte(address << 1):
+            raise RuntimeError("Device not responding at 0x{:02X}".format(address))
+        for byte in buffer:
+            self._write_byte(byte)
+        if transmit_stop:
+            self._stop()
+        
+    def _read(self, address, length):
+        self._start()
+        if not self._write_byte(address << 1 | 1):
+            raise RuntimeError("Device not responding at 0x{:02X}".format(address))
+        buffer = bytearray(length)
+        for byte_position in range(length):
+            buffer[byte_position] = self._read_byte(ack=(byte_position != length - 1))
+        self._stop()
+        return buffer
+        
+    def _read_i2c_block_data(self, address, write_bytes, length):
+        """Untested"""
+        pass
 
 class SPI(_BitBangIO):
     """Software-based implementation of the SPI protocol over GPIO pins."""
