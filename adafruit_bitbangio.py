@@ -84,8 +84,10 @@ class _BitBangIO:
 
     # pylint: enable=no-self-use
 
+
 class I2C(_BitBangIO):
     """Software-based implementation of the I2C protocol over GPIO pins."""
+
     def __init__(self, scl, sda, *, frequency=400000, timeout=1):
         """Initialize bitbang (or software) based I2C.  Must provide the I2C
         clock, and data pin numbers.
@@ -132,13 +134,14 @@ class I2C(_BitBangIO):
     def writeto_then_readfrom(
         self,
         address,
-        out_buffer,
-        in_buffer,
+        buffer_out,
+        buffer_in,
         *,
         out_start=0,
         out_end=None,
         in_start=0,
-        in_end=None
+        in_end=None,
+        stop=True
     ):
         """Write data from buffer_out to an address and then
         read data from an address and into buffer_in
@@ -159,7 +162,7 @@ class I2C(_BitBangIO):
     def _scl_release(self):
         """Release and let the pullups lift"""
         self._scl.value = 1
-        
+
     def _sda_release(self):
         """Release and let the pullups lift"""
         self._sda.value = 1
@@ -238,7 +241,7 @@ class I2C(_BitBangIO):
             self._scl_low()
             sleep(self._delay)
         self._sda.switch_to_output()
-        
+
         if ack:
             self._sda_low()
         else:
@@ -247,13 +250,13 @@ class I2C(_BitBangIO):
         self._scl_release()
         sleep(self._delay)
         return data & 0xFF
-    
+
     def _probe(self, address):
         self._start()
         ok = self._write_byte(address << 1)
         self._stop()
         return ok > 0
-        
+
     def _write(self, address, buffer, transmit_stop):
         self._start()
         if not self._write_byte(address << 1):
@@ -262,7 +265,7 @@ class I2C(_BitBangIO):
             self._write_byte(byte)
         if transmit_stop:
             self._stop()
-        
+
     def _read(self, address, length):
         self._start()
         if not self._write_byte(address << 1 | 1):
@@ -272,10 +275,7 @@ class I2C(_BitBangIO):
             buffer[byte_position] = self._read_byte(ack=(byte_position != length - 1))
         self._stop()
         return buffer
-        
-    def _read_i2c_block_data(self, address, write_bytes, length):
-        """Untested"""
-        pass
+
 
 class SPI(_BitBangIO):
     """Software-based implementation of the SPI protocol over GPIO pins."""
