@@ -83,9 +83,12 @@ Usage Example
 
     spi = bitbangio.SPI(SCLK_PIN, MOSI=MOSI_PIN, MISO=MISO_PIN)
     cs.value = 0
+    while not spi.try_lock():
+        pass
     spi.write([0xD0])
     data = [0x00]
     spi.readinto(data)
+    spi.unlock()
     cs.value = 1
     print("Result is {}".format(data))
 
