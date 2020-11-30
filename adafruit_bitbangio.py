@@ -121,12 +121,12 @@ class I2C(_BitBangIO):
                     found.append(address)
         return found
 
-    def writeto(self, address, buffer, *, start=0, end=None, stop=True):
+    def writeto(self, address, buffer, *, start=0, end=None):
         """Write data from the buffer to an address"""
         if end is None:
             end = len(buffer)
         if self._check_lock():
-            self._write(address, buffer[start:end], stop)
+            self._write(address, buffer[start:end], True)
 
     def readfrom_into(self, address, buffer, *, start=0, end=None):
         """Read data from an address and into the buffer"""
