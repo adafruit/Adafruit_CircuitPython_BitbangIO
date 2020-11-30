@@ -147,8 +147,7 @@ class I2C(_BitBangIO):
         out_start=0,
         out_end=None,
         in_start=0,
-        in_end=None,
-        stop=True
+        in_end=None
     ):
         """Write data from buffer_out to an address and then
         read data from an address and into buffer_in
