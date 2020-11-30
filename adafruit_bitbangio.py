@@ -158,7 +158,7 @@ class I2C(_BitBangIO):
         if in_end is None:
             in_end = len(buffer_in)
         if self._check_lock():
-            self.writeto(address, buffer_out, start=out_start, end=out_end, stop=stop)
+            self.writeto(address, buffer_out, start=out_start, end=out_end)
             self.readfrom_into(address, buffer_in, start=in_start, end=in_end)
 
     def _scl_low(self):
