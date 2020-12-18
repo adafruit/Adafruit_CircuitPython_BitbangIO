@@ -176,13 +176,6 @@ class I2C(_BitBangIO):
         # Use self._timeout to add clock stretching
         self._sda.value = 1
 
-    def _set_values(self, *, scl, sda, delay=None):
-        if delay is None:
-            delay = self._delay
-        self._scl.value = scl
-        self._scl.value = sda
-        sleep(delay)
-
     def _start(self):
         self._sda_release()
         self._scl_release()
