@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
+# SPDX-License-Identifier: MIT
+
 """
 This example is for demonstrating how to retrieving the
 board ID from a BME280, which is stored in register 0xD0.
