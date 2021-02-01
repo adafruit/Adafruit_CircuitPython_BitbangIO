@@ -95,6 +95,11 @@ class I2C(_BitBangIO):
         self._delay = 1 / frequency / 2
         self._timeout = timeout
 
+    def deinit(self):
+        """Free any hardware used by the object."""
+        self._sda.deinit()
+        self._scl.deinit()
+
     def scan(self):
         """Perform an I2C Device Scan"""
         found = []
@@ -276,6 +281,9 @@ class SPI(_BitBangIO):
         while self.try_lock():
             pass
 
+        self._mosi = None
+        self._miso = None
+
         self.configure()
         self.unlock()
 
@@ -290,6 +298,14 @@ class SPI(_BitBangIO):
         if MISO is not None:
             self._miso = DigitalInOut(MISO)
             self._miso.switch_to_input()
+
+    def deinit(self):
+        """Free any hardware used by the object."""
+        self._sclk.deinit()
+        if self._miso:
+            self._miso.deinit()
+        if self._mosi:
+            self._mosi.deinit()
 
     def configure(self, *, baudrate=100000, polarity=0, phase=0, bits=8):
         """Configures the SPI bus. Only valid when locked."""
