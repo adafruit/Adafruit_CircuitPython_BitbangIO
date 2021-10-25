@@ -92,6 +92,11 @@ Usage Example
     cs.value = 1
     print("Result is {}".format(data))
 
+Documentation
+=============
+
+API documentation for this library can be found on `Read the Docs <https://circuitpython.readthedocs.io/projects/bitbangio/en/latest/>`_.
+
 Contributing
 ============
 
