@@ -22,7 +22,6 @@ Implementation Notes
   https://github.com/adafruit/circuitpython/releases
 
 """
-import microcontroller
 
 try:
     from typing import Optional
