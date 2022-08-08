@@ -24,7 +24,7 @@ Implementation Notes
 """
 
 try:
-    from typing import Optional
+    from typing import Optional, List
     from typing_extensions import Literal
     from circuitpython_typing import WriteableBuffer, ReadableBuffer
     from microcontroller import Pin
@@ -62,7 +62,7 @@ class _BitBangIO:
         else:
             raise ValueError("Not locked")
 
-    def _check_lock(self) -> Optional[bool]:
+    def _check_lock(self) -> Literal[True]:
         if not self._locked:
             raise RuntimeError("First call try_lock()")
         return True
@@ -84,7 +84,7 @@ class _BitBangIO:
 class I2C(_BitBangIO):
     """Software-based implementation of the I2C protocol over GPIO pins."""
 
-    def __init__(self, scl: microcontroller.Pin, sda: microcontroller.Pin, *, frequency: int = 400000, timeout: int = 1) -> None:
+    def __init__(self, scl: Pin, sda: Pin, *, frequency: int = 400000, timeout: float = 1) -> None:
         """Initialize bitbang (or software) based I2C.  Must provide the I2C
         clock, and data pin numbers.
         """
@@ -122,7 +122,7 @@ class I2C(_BitBangIO):
                     found.append(address)
         return found
 
-    def writeto(self, address: int, buffer: ReadableBuffer, *, start=0, end=None) -> None:
+    def writeto(self, address: int, buffer: ReadableBuffer, *, start: int = 0, end: Optional[int] = None) -> None:
         """Write data from the buffer to an address"""
         if end is None:
             end = len(buffer)
@@ -269,7 +269,7 @@ class I2C(_BitBangIO):
         if transmit_stop:
             self._stop()
 
-    def _read(self, address: int, length: int) -> ReadableBuffer:
+    def _read(self, address: int, length: int) -> bytearray:
         self._start()
         if not self._write_byte(address << 1 | 1):
             raise RuntimeError("Device not responding at 0x{:02X}".format(address))
@@ -283,7 +283,7 @@ class I2C(_BitBangIO):
 class SPI(_BitBangIO):
     """Software-based implementation of the SPI protocol over GPIO pins."""
 
-    def __init__(self, clock: microcontroller.Pin, MOSI: Optional[microcontroller.Pin] = None, MISO: Optional[microcontroller.Pin] = None) -> None:
+    def __init__(self, clock: Pin, MOSI: Optional[Pin] = None, MISO: Optional[Pin] = None) -> None:
         """Initialize bit bang (or software) based SPI.  Must provide the SPI
         clock, and optionally MOSI and MISO pin numbers. If MOSI is set to None
         then writes will be disabled and fail with an error, likewise for MISO
@@ -320,7 +320,7 @@ class SPI(_BitBangIO):
         if self._mosi:
             self._mosi.deinit()
 
-    def configure(self, *, baudrate: int = 100000, polarity: Literal[0,1] = 0, phase: Literal[0,1] = 0, bits: int = 8) -> None:
+    def configure(self, *, baudrate: int = 100000, polarity: Literal[0, 1] = 0, phase: Literal[0, 1] = 0, bits: int = 8) -> None:
         """Configures the SPI bus. Only valid when locked."""
         if self._check_lock():
             if not isinstance(baudrate, int):
