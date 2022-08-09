@@ -84,7 +84,9 @@ class _BitBangIO:
 class I2C(_BitBangIO):
     """Software-based implementation of the I2C protocol over GPIO pins."""
 
-    def __init__(self, scl: Pin, sda: Pin, *, frequency: int = 400000, timeout: float = 1) -> None:
+    def __init__(
+        self, scl: Pin, sda: Pin, *, frequency: int = 400000, timeout: float = 1
+    ) -> None:
         """Initialize bitbang (or software) based I2C.  Must provide the I2C
         clock, and data pin numbers.
         """
@@ -122,14 +124,28 @@ class I2C(_BitBangIO):
                     found.append(address)
         return found
 
-    def writeto(self, address: int, buffer: ReadableBuffer, *, start: int = 0, end: Optional[int] = None) -> None:
+    def writeto(
+        self,
+        address: int,
+        buffer: ReadableBuffer,
+        *,
+        start: int = 0,
+        end: Optional[int] = None
+    ) -> None:
         """Write data from the buffer to an address"""
         if end is None:
             end = len(buffer)
         if self._check_lock():
             self._write(address, buffer[start:end], True)
 
-    def readfrom_into(self, address: int, buffer: WriteableBuffer, *, start: int = 0, end: Optional[int] = None) -> None:
+    def readfrom_into(
+        self,
+        address: int,
+        buffer: WriteableBuffer,
+        *,
+        start: int = 0,
+        end: Optional[int] = None
+    ) -> None:
         """Read data from an address and into the buffer"""
         if end is None:
             end = len(buffer)
@@ -204,7 +220,7 @@ class I2C(_BitBangIO):
         self._sda_low()
         self._wait()
 
-    def _write_byte(self, byte: int ) -> bool:
+    def _write_byte(self, byte: int) -> bool:
         for bit_position in range(8):
             self._scl_low()
 
@@ -283,7 +299,9 @@ class I2C(_BitBangIO):
 class SPI(_BitBangIO):
     """Software-based implementation of the SPI protocol over GPIO pins."""
 
-    def __init__(self, clock: Pin, MOSI: Optional[Pin] = None, MISO: Optional[Pin] = None) -> None:
+    def __init__(
+        self, clock: Pin, MOSI: Optional[Pin] = None, MISO: Optional[Pin] = None
+    ) -> None:
         """Initialize bit bang (or software) based SPI.  Must provide the SPI
         clock, and optionally MOSI and MISO pin numbers. If MOSI is set to None
         then writes will be disabled and fail with an error, likewise for MISO
@@ -320,7 +338,14 @@ class SPI(_BitBangIO):
         if self._mosi:
             self._mosi.deinit()
 
-    def configure(self, *, baudrate: int = 100000, polarity: Literal[0, 1] = 0, phase: Literal[0, 1] = 0, bits: int = 8) -> None:
+    def configure(
+        self,
+        *,
+        baudrate: int = 100000,
+        polarity: Literal[0, 1] = 0,
+        phase: Literal[0, 1] = 0,
+        bits: int = 8
+    ) -> None:
         """Configures the SPI bus. Only valid when locked."""
         if self._check_lock():
             if not isinstance(baudrate, int):
@@ -345,7 +370,9 @@ class SPI(_BitBangIO):
             pass
         return monotonic()  # Return current time
 
-    def write(self, buffer: ReadableBuffer, start: int = 0, end: Optional[int] = None) -> None:
+    def write(
+        self, buffer: ReadableBuffer, start: int = 0, end: Optional[int] = None
+    ) -> None:
         """Write the data contained in buf. Requires the SPI being locked.
         If the buffer is empty, nothing happens.
         """
@@ -377,7 +404,13 @@ class SPI(_BitBangIO):
             self._sclk.value = self._polarity
 
     # pylint: disable=too-many-branches
-    def readinto(self, buffer: WriteableBuffer, start: int = 0, end: Optional[int] = None, write_value: int = 0) -> None:
+    def readinto(
+        self,
+        buffer: WriteableBuffer,
+        start: int = 0,
+        end: Optional[int] = None,
+        write_value: int = 0,
+    ) -> None:
         """Read into the buffer specified by buf while writing zeroes. Requires the SPI being
         locked. If the number of bytes to read is 0, nothing happens.
         """
