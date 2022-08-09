@@ -130,7 +130,7 @@ class I2C(_BitBangIO):
         buffer: ReadableBuffer,
         *,
         start: int = 0,
-        end: Optional[int] = None
+        end: Optional[int] = None,
     ) -> None:
         """Write data from the buffer to an address"""
         if end is None:
@@ -144,7 +144,7 @@ class I2C(_BitBangIO):
         buffer: WriteableBuffer,
         *,
         start: int = 0,
-        end: Optional[int] = None
+        end: Optional[int] = None,
     ) -> None:
         """Read data from an address and into the buffer"""
         if end is None:
@@ -164,7 +164,7 @@ class I2C(_BitBangIO):
         out_start: int = 0,
         out_end: Optional[int] = None,
         in_start: int = 0,
-        in_end: Optional[int] = None
+        in_end: Optional[int] = None,
     ) -> None:
         """Write data from buffer_out to an address and then
         read data from an address and into buffer_in
@@ -279,7 +279,8 @@ class I2C(_BitBangIO):
     def _write(self, address: int, buffer: ReadableBuffer, transmit_stop: bool) -> None:
         self._start()
         if not self._write_byte(address << 1):
-            raise RuntimeError("Device not responding at 0x{:02X}".format(address))
+            # raise RuntimeError("Device not responding at 0x{:02X}".format(address))
+            raise RuntimeError(f"Device not responding at 0x{address:02X}")
         for byte in buffer:
             self._write_byte(byte)
         if transmit_stop:
@@ -288,7 +289,8 @@ class I2C(_BitBangIO):
     def _read(self, address: int, length: int) -> bytearray:
         self._start()
         if not self._write_byte(address << 1 | 1):
-            raise RuntimeError("Device not responding at 0x{:02X}".format(address))
+            # raise RuntimeError("Device not responding at 0x{:02X}".format(address))
+            raise RuntimeError(f"Device not responding at 0x{address:02X}")
         buffer = bytearray(length)
         for byte_position in range(length):
             buffer[byte_position] = self._read_byte(ack=(byte_position != length - 1))
@@ -344,7 +346,7 @@ class SPI(_BitBangIO):
         baudrate: int = 100000,
         polarity: Literal[0, 1] = 0,
         phase: Literal[0, 1] = 0,
-        bits: int = 8
+        bits: int = 8,
     ) -> None:
         """Configures the SPI bus. Only valid when locked."""
         if self._check_lock():
@@ -464,7 +466,7 @@ class SPI(_BitBangIO):
         out_start: int = 0,
         out_end: Optional[int] = None,
         in_start: int = 0,
-        in_end: Optional[int] = None
+        in_end: Optional[int] = None,
     ) -> None:
         """Write out the data in buffer_out while simultaneously reading data into buffer_in.
         The lengths of the slices defined by buffer_out[out_start:out_end] and
