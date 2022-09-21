@@ -24,8 +24,9 @@ Implementation Notes
 """
 
 try:
-    from typing import Optional, List
+    from typing import List, Optional, Type
     from typing_extensions import Literal
+    from types import TracebackType
     from circuitpython_typing import WriteableBuffer, ReadableBuffer
     from microcontroller import Pin
 except ImportError:
@@ -67,10 +68,15 @@ class _BitBangIO:
             raise RuntimeError("First call try_lock()")
         return True
 
-    def __enter__(self):
+    def __enter__(self) -> "_BitBangIO":
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
         self.deinit()
 
     # pylint: disable=no-self-use
