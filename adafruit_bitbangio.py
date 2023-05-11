@@ -299,7 +299,7 @@ class I2C(_BitBangIO):
             raise RuntimeError(f"Device not responding at 0x{address:02X}")
         buffer = bytearray(length)
         for byte_position in range(length):
-            buffer[byte_position] = self._read_byte(ack=(byte_position != length - 1))
+            buffer[byte_position] = self._read_byte(ack=byte_position != length - 1)
         self._stop()
         return buffer
 
