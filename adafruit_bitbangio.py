@@ -398,13 +398,13 @@ class SPI(_BitBangIO):
                     # Set clock to base
                     if not self._phase:  # Mode 0, 2
                         self._mosi.value = bit_value
-                    self._sclk.value = self._polarity
+                    self._sclk.value = not self._polarity
                     start_time = self._wait(start_time)
 
                     # Flip clock off base
                     if self._phase:  # Mode 1, 3
                         self._mosi.value = bit_value
-                    self._sclk.value = not self._polarity
+                    self._sclk.value = self._polarity
                     start_time = self._wait(start_time)
 
             # Return pins to base positions
