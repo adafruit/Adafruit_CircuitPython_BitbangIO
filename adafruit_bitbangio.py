@@ -323,9 +323,6 @@ class SPI(_BitBangIO):
         self._mosi = None
         self._miso = None
 
-        self.configure()
-        self.unlock()
-
         # Set pins as outputs/inputs.
         self._sclk = DigitalInOut(clock)
         self._sclk.switch_to_output()
@@ -337,6 +334,9 @@ class SPI(_BitBangIO):
         if MISO is not None:
             self._miso = DigitalInOut(MISO)
             self._miso.switch_to_input()
+
+        self.configure()
+        self.unlock()
 
     def deinit(self) -> None:
         """Free any hardware used by the object."""
@@ -372,11 +372,29 @@ class SPI(_BitBangIO):
             self._bits = bits
             self._half_period = (1 / self._baudrate) / 2  # 50% Duty Cyle delay
 
+            # Initialize the clock to the idle state. This is important to
+            # guarantee that the clock is at a known (idle) state before
+            # any read/write operations.
+            self._sclk.value = self._polarity
+
     def _wait(self, start: Optional[int] = None) -> float:
         """Wait for up to one half cycle"""
         while (start + self._half_period) > monotonic():
             pass
         return monotonic()  # Return current time
+
+    def _should_write(self, to_active: Literal[0, 1]) -> bool:
+        """Return true if a bit should be written on the given clock transition."""
+        # phase 0: write when active is 0
+        # phase 1: write when active is 1
+        return self._phase == to_active
+
+    def _should_read(self, to_active: Literal[0, 1]) -> bool:
+        """Return true if a bit should be read on the given clock transition."""
+        # phase 0: read when active is 1
+        # phase 1: read when active is 0
+        # Data is read on the idle->active transition only when the phase is 1
+        return self._phase == 1 - to_active
 
     def write(
         self, buffer: ReadableBuffer, start: int = 0, end: Optional[int] = None
@@ -392,24 +410,26 @@ class SPI(_BitBangIO):
 
         if self._check_lock():
             start_time = monotonic()
+            # Note: when we come here, our clock must always be its idle state.
             for byte in buffer[start:end]:
                 for bit_position in range(self._bits):
                     bit_value = byte & 0x80 >> bit_position
-                    # Set clock to base
-                    if not self._phase:  # Mode 0, 2
+                    # clock: idle, or has made an active->idle transition.
+                    if self._should_write(to_active=0):
                         self._mosi.value = bit_value
+                    # clock: wait in idle for half a period
+                    start_time = self._wait(start_time)
+                    # clock: idle->active
                     self._sclk.value = not self._polarity
-                    start_time = self._wait(start_time)
-
-                    # Flip clock off base
-                    if self._phase:  # Mode 1, 3
+                    if self._should_write(to_active=1):
                         self._mosi.value = bit_value
-                    self._sclk.value = self._polarity
+                    # clock: wait in active for half a period
                     start_time = self._wait(start_time)
-
-            # Return pins to base positions
-            self._mosi.value = 0
-            self._sclk.value = self._polarity
+                    # clock: active->idle
+                    self._sclk.value = self._polarity
+            # clock: stay in idle for the last active->idle transition
+            # to settle.
+            start_time = self._wait(start_time)
 
     # pylint: disable=too-many-branches
     def readinto(
@@ -433,26 +453,29 @@ class SPI(_BitBangIO):
                 for bit_position in range(self._bits):
                     bit_mask = 0x80 >> bit_position
                     bit_value = write_value & 0x80 >> bit_position
-                    # Return clock to base
-                    self._sclk.value = self._polarity
-                    start_time = self._wait(start_time)
-                    # Handle read on leading edge of clock.
-                    if not self._phase:  # Mode 0, 2
+                    # clock: idle, or has made an active->idle transition.
+                    if self._should_write(to_active=0):
                         if self._mosi is not None:
                             self._mosi.value = bit_value
+                    # clock: wait half a period.
+                    start_time = self._wait(start_time)
+                    # clock: idle->active
+                    self._sclk.value = not self._polarity
+                    if self._should_read(to_active=1):
                         if self._miso.value:
                             # Set bit to 1 at appropriate location.
                             buffer[byte_position] |= bit_mask
                         else:
                             # Set bit to 0 at appropriate location.
                             buffer[byte_position] &= ~bit_mask
-                    # Flip clock off base
-                    self._sclk.value = not self._polarity
-                    start_time = self._wait(start_time)
-                    # Handle read on trailing edge of clock.
-                    if self._phase:  # Mode 1, 3
+                    if self._should_write(to_active=1):
                         if self._mosi is not None:
                             self._mosi.value = bit_value
+                    # clock: wait half a period
+                    start_time = self._wait(start_time)
+                    # Clock: active->idle
+                    self._sclk.value = self._polarity
+                    if self._should_read(to_active=0):
                         if self._miso.value:
                             # Set bit to 1 at appropriate location.
                             buffer[byte_position] |= bit_mask
@@ -460,9 +483,8 @@ class SPI(_BitBangIO):
                             # Set bit to 0 at appropriate location.
                             buffer[byte_position] &= ~bit_mask
 
-            # Return pins to base positions
-            self._mosi.value = 0
-            self._sclk.value = self._polarity
+            # clock: wait another half period for the last transition.
+            start_time = self._wait(start_time)
 
     def write_readinto(
         self,
@@ -499,34 +521,34 @@ class SPI(_BitBangIO):
                         buffer_out[byte_position + out_start] & 0x80 >> bit_position
                     )
                     in_byte_position = byte_position + in_start
-                    # Return clock to 0
-                    self._sclk.value = self._polarity
-                    start_time = self._wait(start_time)
-                    # Handle read on leading edge of clock.
-                    if not self._phase:  # Mode 0, 2
+                    # clock: idle, or has made an active->idle transition.
+                    if self._should_write(to_active=0):
                         self._mosi.value = bit_value
-                        if self._miso.value:
-                            # Set bit to 1 at appropriate location.
-                            buffer_in[in_byte_position] |= bit_mask
-                        else:
-                            # Set bit to 0 at appropriate location.
-                            buffer_in[in_byte_position] &= ~bit_mask
-                    # Flip clock off base
+                    # clock: wait half a period.
+                    start_time = self._wait(start_time)
+                    # clock: idle->active
                     self._sclk.value = not self._polarity
-                    start_time = self._wait(start_time)
-                    # Handle read on trailing edge of clock.
-                    if self._phase:  # Mode 1, 3
-                        self._mosi.value = bit_value
+                    if self._should_read(to_active=1):
                         if self._miso.value:
                             # Set bit to 1 at appropriate location.
                             buffer_in[in_byte_position] |= bit_mask
                         else:
-                            # Set bit to 0 at appropriate location.
+                            buffer_in[in_byte_position] &= ~bit_mask
+                    if self._should_write(to_active=1):
+                        self._mosi.value = bit_value
+                    # clock: wait half a period
+                    start_time = self._wait(start_time)
+                    # Clock: active->idle
+                    self._sclk.value = self._polarity
+                    if self._should_read(to_active=0):
+                        if self._miso.value:
+                            # Set bit to 1 at appropriate location.
+                            buffer_in[in_byte_position] |= bit_mask
+                        else:
                             buffer_in[in_byte_position] &= ~bit_mask
 
-            # Return pins to base positions
-            self._mosi.value = 0
-            self._sclk.value = self._polarity
+            # clock: wait another half period for the last transition.
+            start_time = self._wait(start_time)
 
     # pylint: enable=too-many-branches
 
