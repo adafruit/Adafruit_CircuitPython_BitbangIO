@@ -190,13 +190,17 @@ class I2C(_BitBangIO):
         self._sda.switch_to_output(value=False)
 
     def _scl_release(self) -> None:
-        """Release and let the pullups lift"""
-        # Use self._timeout to add clock stretching
+        """Release and wait for the pullups to lift."""
         self._scl.switch_to_input()
+        # Wait at most self._timeout seconds for any clock stretching.
+        end = monotonic() + self._timeout
+        while not self._scl.value and end > monotonic():
+            pass
+        if not self._scl.value:
+            raise RuntimeError("Bus timed out.")
 
     def _sda_release(self) -> None:
         """Release and let the pullups lift"""
-        # Use self._timeout to add clock stretching
         self._sda.switch_to_input()
 
     def _start(self) -> None:
@@ -288,7 +292,8 @@ class I2C(_BitBangIO):
             # raise RuntimeError("Device not responding at 0x{:02X}".format(address))
             raise RuntimeError(f"Device not responding at 0x{address:02X}")
         for byte in buffer:
-            self._write_byte(byte)
+            if not self._write_byte(byte):
+                raise RuntimeError(f"Device not responding at 0x{address:02X}")
         if transmit_stop:
             self._stop()
 
