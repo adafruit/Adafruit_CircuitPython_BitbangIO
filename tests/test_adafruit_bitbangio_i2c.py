@@ -2,11 +2,12 @@
 # SPDX-License-Identifier: MIT
 
 from typing import Sequence
+
 import pytest
 import simulated_i2c as si2c
 import simulator as sim
-import adafruit_bitbangio
 
+import adafruit_bitbangio
 
 _SCL_NET = "scl"
 _SDA_NET = "sda"
@@ -16,17 +17,11 @@ class TestBitbangI2C:
     def setup_method(self) -> None:
         sim.engine.reset()
         # Create nets, with a pullup by default.
-        scl = sim.engine.create_net(
-            _SCL_NET, monitor=True, default_level=sim.Level.HIGH
-        )
-        sda = sim.engine.create_net(
-            _SDA_NET, monitor=True, default_level=sim.Level.HIGH
-        )
-        # pylint: disable=attribute-defined-outside-init
+        scl = sim.engine.create_net(_SCL_NET, monitor=True, default_level=sim.Level.HIGH)
+        sda = sim.engine.create_net(_SDA_NET, monitor=True, default_level=sim.Level.HIGH)
         self.scl_pin = sim.FakePin("scl_pin", scl)
         self.sda_pin = sim.FakePin("sda_pin", sda)
         self.i2cbus = si2c.I2CBus(scl=scl, sda=sda)
-        # pylint: enable=attribute-defined-outside-init
 
     @sim.stub
     @pytest.mark.parametrize("addresses", [[0x42, 0x43]])
@@ -59,9 +54,7 @@ class TestBitbangI2C:
         device = si2c.Constant("target", address=0x42, bus=self.i2cbus)
 
         # Write data over the bus and verify the device received it.
-        with adafruit_bitbangio.I2C(
-            scl=self.scl_pin, sda=self.sda_pin, frequency=1000
-        ) as i2c:
+        with adafruit_bitbangio.I2C(scl=self.scl_pin, sda=self.sda_pin, frequency=1000) as i2c:
             i2c.try_lock()
             i2c.writeto(address=0x42, buffer=data_array)
             i2c.unlock()
@@ -75,9 +68,7 @@ class TestBitbangI2C:
         # attach a device that will ack the address, but not the data.
         si2c.Constant("target", address=0x42, bus=self.i2cbus, ack_data=False)
 
-        with adafruit_bitbangio.I2C(
-            scl=self.scl_pin, sda=self.sda_pin, frequency=1000
-        ) as i2c:
+        with adafruit_bitbangio.I2C(scl=self.scl_pin, sda=self.sda_pin, frequency=1000) as i2c:
             i2c.try_lock()
             with pytest.raises(RuntimeError) as info:
                 i2c.writeto(address=0x42, buffer=b"\x42")
@@ -92,9 +83,7 @@ class TestBitbangI2C:
         data_array = bytearray(int(data, 2).to_bytes(datalen, byteorder="big"))
 
         # attach a device that does clock stretching, but not exceed our timeout.
-        device = si2c.Constant(
-            "target", address=0x42, bus=self.i2cbus, clock_stretch_sec=1
-        )
+        device = si2c.Constant("target", address=0x42, bus=self.i2cbus, clock_stretch_sec=1)
 
         with adafruit_bitbangio.I2C(
             scl=self.scl_pin, sda=self.sda_pin, frequency=1000, timeout=2.0
@@ -132,9 +121,7 @@ class TestBitbangI2C:
         si2c.Constant("target", address=0x42, bus=self.i2cbus, data_to_send=value)
 
         # Confirm we were able to read back the data
-        with adafruit_bitbangio.I2C(
-            scl=self.scl_pin, sda=self.sda_pin, frequency=1000
-        ) as i2c:
+        with adafruit_bitbangio.I2C(scl=self.scl_pin, sda=self.sda_pin, frequency=1000) as i2c:
             i2c.try_lock()
             i2c.readfrom_into(address=0x42, buffer=data_array)
             i2c.unlock()
@@ -168,18 +155,12 @@ class TestBitbangI2C:
         data_array = bytearray(1)
 
         # attach a device that sends a constant byte of data.
-        device = si2c.Constant(
-            "target", address=0x42, bus=self.i2cbus, data_to_send=expect_value
-        )
+        device = si2c.Constant("target", address=0x42, bus=self.i2cbus, data_to_send=expect_value)
 
         # Send the send_data, and check we got back expect_data
-        with adafruit_bitbangio.I2C(
-            scl=self.scl_pin, sda=self.sda_pin, frequency=1000
-        ) as i2c:
+        with adafruit_bitbangio.I2C(scl=self.scl_pin, sda=self.sda_pin, frequency=1000) as i2c:
             i2c.try_lock()
-            i2c.writeto_then_readfrom(
-                address=0x42, buffer_out=send_array, buffer_in=data_array
-            )
+            i2c.writeto_then_readfrom(address=0x42, buffer_out=send_array, buffer_in=data_array)
             i2c.unlock()
 
         # Useful to debug signals in pulseview.

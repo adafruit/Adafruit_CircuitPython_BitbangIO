@@ -9,6 +9,7 @@ It should return a result of [96]
 
 import board
 import digitalio
+
 import adafruit_bitbangio as bitbangio
 
 # Change these to the actual connections
@@ -29,4 +30,4 @@ data = [0x00]
 spi.readinto(data)
 spi.unlock()
 cs.value = 1
-print("Result is {}".format(data))
+print(f"Result is {data}")

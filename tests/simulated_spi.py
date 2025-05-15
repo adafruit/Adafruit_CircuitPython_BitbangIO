@@ -3,6 +3,7 @@
 """Implementation of testable SPI devices."""
 
 import dataclasses
+
 import simulator as sim
 
 
@@ -37,11 +38,9 @@ class Constant:
         """Writes the next bit to the cipo net."""
         if self._bit_position >= len(self._data):
             # Just write a zero
-            self._cipo.value(0)  # pylint: disable=not-callable
+            self._cipo.value(0)
             return
-        self._cipo.value(
-            int(self._data[self._bit_position])  # pylint: disable=not-callable
-        )
+        self._cipo.value(int(self._data[self._bit_position]))
         self._bit_position += 1
 
     def _on_level_change(self, net: sim.Net) -> None:
