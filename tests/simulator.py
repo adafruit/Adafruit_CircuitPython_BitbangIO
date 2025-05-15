@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: MIT
 """Simple logic level simulator to test I2C/SPI interactions."""
 
-from typing import Any, Callable, List, Literal, Optional, Sequence
 import dataclasses
 import enum
 import functools
 import time
+from typing import Any, Callable, List, Literal, Optional, Sequence
 
 import digitalio
 
@@ -89,7 +89,7 @@ class Engine:
 
     def write_vcd(self, path: str) -> None:
         """Writes monitored nets to the provided path as a VCD file."""
-        with open(path, "wt") as vcdfile:
+        with open(path, "w") as vcdfile:
             vcdfile.write("$version pytest output $end\n")
             vcdfile.write("$timescale 1 us $end\n")
             vcdfile.write("$scope module top $end\n")
@@ -116,14 +116,14 @@ engine = Engine()
 class FakePin:
     """Test double for a microcontroller pin used in tests."""
 
-    IN = Mode.IN  # pylint: disable=invalid-name
+    IN = Mode.IN
     OUT = Mode.OUT
     PULL_NONE = Pull.NONE
     PULL_UP = Pull.UP
     PULL_DOWN = Pull.DOWN
 
     def __init__(self, pin_id: str, net: Optional["Net"] = None):
-        self.id = pin_id  # pylint: disable=invalid-name
+        self.id = pin_id
         self.mode: Optional[Mode] = None
         self.pull: Optional[Pull] = None
         self.level: Level = Level.Z
@@ -157,11 +157,9 @@ class FakePin:
                 # Nothing is actively driving the line - we assume that during
                 # testing, this is an error either in the test setup, or
                 # something is asking for a value in an uninitialized state.
-                raise ValueError(
-                    f"{self.id}: value read but nothing is driving the net."
-                )
+                raise ValueError(f"{self.id}: value read but nothing is driving the net.")
             return 1 if level == Level.HIGH else 0
-        if val in (0, 1):
+        if val in {0, 1}:
             if self.mode != Mode.OUT:
                 raise ValueError(f"{self.id}: is not an output")
             nlevel = Level.HIGH if val else Level.LOW

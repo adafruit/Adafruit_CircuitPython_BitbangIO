@@ -2,11 +2,12 @@
 # SPDX-License-Identifier: MIT
 
 from typing import Literal, Sequence
+
 import pytest
 import simulated_spi as sspi
 import simulator as sim
-import adafruit_bitbangio
 
+import adafruit_bitbangio
 
 _CLOCK_NET = "clock"
 _COPI_NET = "copi"
@@ -39,9 +40,7 @@ def _check_write(
     last_clock_state = sim.Level.Z
     last_copi_state = sim.Level.Z
     last_copi_us = 0
-    idle, active = (
-        (sim.Level.HIGH, sim.Level.LOW) if polarity else (sim.Level.LOW, sim.Level.HIGH)
-    )
+    idle, active = (sim.Level.HIGH, sim.Level.LOW) if polarity else (sim.Level.LOW, sim.Level.HIGH)
     bits_read = 0
     # We want data to be written at least this long before a read
     # transition.
@@ -88,18 +87,16 @@ class TestBitbangSpi:
         copi = sim.engine.create_net(_COPI_NET, monitor=True)
         cipo = sim.engine.create_net(_CIPO_NET, monitor=True)
         enable = sim.engine.create_net(_ENABLE_NET, monitor=True)
-        # pylint: disable=attribute-defined-outside-init
         self.clock_pin = sim.FakePin("clock_pin", clock)
         self.copi_pin = sim.FakePin("copi_pin", copi)
         self.cipo_pin = sim.FakePin("cipo_pin", cipo)
         self.enable_pin = sim.FakePin("enable_pin", enable)
         self.enable_pin.init(mode=sim.Mode.OUT)
         self.spibus = sspi.SpiBus(clock=clock, copi=copi, cipo=cipo, enable=enable)
-        # pylint: enable=attribute-defined-outside-init
         self._enable_net(0)
 
     def _enable_net(self, val: Literal[0, 1]) -> None:
-        self.enable_pin.value(val)  # pylint: disable=not-callable
+        self.enable_pin.value(val)
 
     @sim.stub
     @pytest.mark.parametrize("baud", [100])
@@ -139,9 +136,7 @@ class TestBitbangSpi:
         data_int = int(data, 2)
         data_array = bytearray(data_int.to_bytes(1, byteorder="big"))
         # attach a device that sends a constant.
-        _ = sspi.Constant(
-            data=data_array, bus=self.spibus, polarity=polarity, phase=phase
-        )
+        _ = sspi.Constant(data=data_array, bus=self.spibus, polarity=polarity, phase=phase)
 
         # Read/write a byte of data
         with adafruit_bitbangio.SPI(
@@ -181,9 +176,7 @@ class TestBitbangSpi:
         nbytes = len(data) // 8
         data_array = bytearray(int(data, 2).to_bytes(nbytes, byteorder="big"))
         # attach a device that sends a constant.
-        _ = sspi.Constant(
-            data=data_array, bus=self.spibus, polarity=polarity, phase=phase
-        )
+        _ = sspi.Constant(data=data_array, bus=self.spibus, polarity=polarity, phase=phase)
 
         # Read/write data array
         with adafruit_bitbangio.SPI(

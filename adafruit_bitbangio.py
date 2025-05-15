@@ -24,16 +24,18 @@ Implementation Notes
 """
 
 try:
-    from typing import List, Optional, Type
-    from typing_extensions import Literal
     from types import TracebackType
-    from circuitpython_typing import WriteableBuffer, ReadableBuffer
+    from typing import List, Optional, Type
+
+    from circuitpython_typing import ReadableBuffer, WriteableBuffer
     from microcontroller import Pin
+    from typing_extensions import Literal
 except ImportError:
     pass
 
 # imports
 from time import monotonic
+
 from digitalio import DigitalInOut
 
 __version__ = "0.0.0+auto.0"
@@ -79,20 +81,15 @@ class _BitBangIO:
     ) -> None:
         self.deinit()
 
-    # pylint: disable=no-self-use
     def deinit(self) -> None:
         """Free any hardware used by the object."""
         return
-
-    # pylint: enable=no-self-use
 
 
 class I2C(_BitBangIO):
     """Software-based implementation of the I2C protocol over GPIO pins."""
 
-    def __init__(
-        self, scl: Pin, sda: Pin, *, frequency: int = 400000, timeout: float = 1
-    ) -> None:
+    def __init__(self, scl: Pin, sda: Pin, *, frequency: int = 400000, timeout: float = 1) -> None:
         """Initialize bitbang (or software) based I2C.  Must provide the I2C
         clock, and data pin numbers.
         """
@@ -312,9 +309,7 @@ class I2C(_BitBangIO):
 class SPI(_BitBangIO):
     """Software-based implementation of the SPI protocol over GPIO pins."""
 
-    def __init__(
-        self, clock: Pin, MOSI: Optional[Pin] = None, MISO: Optional[Pin] = None
-    ) -> None:
+    def __init__(self, clock: Pin, MOSI: Optional[Pin] = None, MISO: Optional[Pin] = None) -> None:
         """Initialize bit bang (or software) based SPI.  Must provide the SPI
         clock, and optionally MOSI and MISO pin numbers. If MOSI is set to None
         then writes will be disabled and fail with an error, likewise for MISO
@@ -367,9 +362,9 @@ class SPI(_BitBangIO):
                 raise ValueError("bits must be an integer")
             if bits < 1 or bits > 8:
                 raise ValueError("bits must be in the range of 1-8")
-            if polarity not in (0, 1):
+            if polarity not in {0, 1}:
                 raise ValueError("polarity must be either 0 or 1")
-            if phase not in (0, 1):
+            if phase not in {0, 1}:
                 raise ValueError("phase must be either 0 or 1")
             self._baudrate = baudrate
             self._polarity = polarity
@@ -401,9 +396,7 @@ class SPI(_BitBangIO):
         # Data is read on the idle->active transition only when the phase is 1
         return self._phase == 1 - to_active
 
-    def write(
-        self, buffer: ReadableBuffer, start: int = 0, end: Optional[int] = None
-    ) -> None:
+    def write(self, buffer: ReadableBuffer, start: int = 0, end: Optional[int] = None) -> None:
         """Write the data contained in buf. Requires the SPI being locked.
         If the buffer is empty, nothing happens.
         """
@@ -436,7 +429,6 @@ class SPI(_BitBangIO):
             # to settle.
             start_time = self._wait(start_time)
 
-    # pylint: disable=too-many-branches
     def readinto(
         self,
         buffer: WriteableBuffer,
@@ -522,9 +514,7 @@ class SPI(_BitBangIO):
             for byte_position, _ in enumerate(buffer_out[out_start:out_end]):
                 for bit_position in range(self._bits):
                     bit_mask = 0x80 >> bit_position
-                    bit_value = (
-                        buffer_out[byte_position + out_start] & 0x80 >> bit_position
-                    )
+                    bit_value = buffer_out[byte_position + out_start] & 0x80 >> bit_position
                     in_byte_position = byte_position + in_start
                     # clock: idle, or has made an active->idle transition.
                     if self._should_write(to_active=0):
@@ -554,8 +544,6 @@ class SPI(_BitBangIO):
 
             # clock: wait another half period for the last transition.
             start_time = self._wait(start_time)
-
-    # pylint: enable=too-many-branches
 
     @property
     def frequency(self) -> int:

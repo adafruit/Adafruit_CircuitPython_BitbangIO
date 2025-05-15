@@ -2,17 +2,16 @@
 # SPDX-License-Identifier: MIT
 """Implementation of testable I2C devices."""
 
-from typing import Any, Callable, Optional, Union
 import dataclasses
 import enum
 import signal
 import types
-from typing_extensions import TypeAlias
-import simulator as sim
+from typing import Any, Callable, Optional, Union
 
-_SignalHandler: TypeAlias = Union[
-    Callable[[int, Optional[types.FrameType]], Any], int, None
-]
+import simulator as sim
+from typing_extensions import TypeAlias
+
+_SignalHandler: TypeAlias = Union[Callable[[int, Optional[types.FrameType]], Any], int, None]
 
 
 @enum.unique
@@ -123,7 +122,7 @@ class Constant:
         self._maybe_clock_stretch()
 
         # Return early unless we need to send data.
-        if self._state not in (State.ACK, State.ACK_DONE, State.WRITE):
+        if self._state not in {State.ACK, State.ACK_DONE, State.WRITE}:
             return
 
         if self._state == State.ACK:
@@ -154,7 +153,7 @@ class Constant:
                 self._sent_bit_count += 1
 
     def _on_clock_rise(self) -> None:
-        if self._state not in (State.ADDRESS, State.READ, State.WAIT_ACK):
+        if self._state not in {State.ADDRESS, State.READ, State.WAIT_ACK}:
             return
         bit_value = 1 if self._sda.net.level == sim.Level.HIGH else 0
         if self._state == State.WAIT_ACK:
