@@ -54,7 +54,7 @@ class Engine:
 
     def __init__(self) -> None:
         self._start_us = int(time.monotonic() * 1e6)
-        self._nets: List["Net"] = []
+        self._nets: List[Net] = []
 
     def reset(self) -> None:
         """Clears out all existing state and resets the simulation."""
@@ -183,7 +183,7 @@ class Net:
         self._pins: List[FakePin] = []
         self._default_level = default_level
         self.level = default_level
-        self._triggers: List[Callable[["Net"], None]] = []
+        self._triggers: List[Callable[[Net], None]] = []
         self.history = [(engine._start_us, default_level)] if monitor else None
 
     def update(self) -> None:
